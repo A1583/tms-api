@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String?
+  posts Post[]
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String?
+  published Boolean? @default(false)
+  author    User?    @relation(fields: [authorId], references: [id])
+  authorId  Int?
+}
+
+model Order {
+  id               Int        @id @default(autoincrement())
+  logisticId       Int        @map("logistic_id")
+  trackingNumber   String     @unique @map("tracking_number") @db.VarChar(50)
+  customerProvince String?    @map("customer_province")
+  shopProvince     String?    @map("shop_province")
+  currentStatus    String?    @map("current_status")
+  shippingFee      Decimal?   @map("shipping_fee")
+  amount           Decimal?   @map("amount")
+  total            Decimal?   @map("total")
+  createdBy        String?    @map("created_by") @db.VarChar(50)
+  updatedBy        String?    @map("updated_by") @db.VarChar(50)
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime?  @updatedAt @map("updated_at")
+  deletedAt        DateTime?  @map("deleted_at")
+  logistic         Logistic? @relation(fields: [logisticId], references: [id])
+
+  @@index([logisticId, trackingNumber, createdAt, currentStatus])
+  @@map("orders")
+}
+
+model Logistic {
+  id        Int       @id @default(autoincrement())
+  code      String    @unique @db.VarChar(10)
+  name      String    @db.VarChar(50)
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+  createdBy String?   @map("created_by") @db.VarChar(50)
+  updatedBy String?   @map("updated_by") @db.VarChar(50)
+  Orders    Order[]
+
+  @@index([code, active])
+  @@map("logistics")
+}
